@@ -31,6 +31,9 @@ bbb-conf --restart
 find /etc/systemd/ | grep wants | xargs -r -n 1 basename | grep service | grep -v networking | grep -v tty   | xargs -r -n 1 -I __ systemctl disable __
 systemctl disable tomcat7
 
+# Install meteor
+curl https://install.meteor.com/ | sh
+
 # Update files
 updatedb
 
