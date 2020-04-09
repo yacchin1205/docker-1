@@ -1,128 +1,34 @@
-# BigBlueButton Docker
+# BigBlueButton docker
 
-## 1. Install docker-ce
-
-This container depends on docker-ce.
-
-1 - Make sure you don't have docker installed:
-`sudo apt-get remove docker docker-engine docker.io`
-
-2 - Install docker-ce:
+## Define variables with host and container name ( only used during the setup )
 ```
-sudo apt-get update;
-sudo apt-get install \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    software-properties-common;
-
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-
-sudo add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-   $(lsb_release -cs) \
-   stable"
-
-sudo apt-get update
-
-sudo apt-get install docker-ce
-
-sudo addgroup `whoami` docker
-
+NAME=shailon
+HOSTNAME=$NAME.bbbvm.imdt.com.br
 ```
 
-## 2. Clone this repository
+## Create folder and clone the BBB code
 ```
-mkdir -p ~/bbb/src/
-cd ~/bbb/
-git clone https://github.com/bigbluebutton/docker.git
-cd docker
-git checkout v2.3.x
-```
-
-## 3. Clone BBB sources repository (optional)
-```
-cd ~/bbb/src/
+mkdir $HOME/$NAME/
+cd $HOME/$NAME/
 git clone https://github.com/bigbluebutton/bigbluebutton.git
+
+cd
+
+BBB_SRC_FOLDER=$HOME/$NAME/bigbluebutton
 ```
 
-## 4. Setup SSL certificate
-Generate a certificate to your container (using letsencrypt or other solution) and then copy your certificate to certs/ folder with the commands:
+## Download the certificates
 ```
-mkdir certs/
-cp fullchain.pem certs/
-cp privkey.pem certs/
-```
-
-## 5. Creating container
-In order to create the container you must specify the hostname of container and the domain name.
-
-In this example your container will be acessible from https://bbb001.bbbvm.imdt.com.br :
-
-```
-docker-compose build bbb
-NAME=bbb001 DOMAIN=bbbvm.imdt.com.br sh -c 'docker-compose run --name $NAME bbb'
-```
-## 6. Add an entry in your `/etc/hosts` file
-
-In order to access the container, you need to get the IP address of container by running the following command:
-
-```
-docker exec -it bbb001 ifconfig eth0
+mkdir $HOME/$NAME/certs/ -p
+wget http://a.bbbvm.imdt.com.br/certs/fullchain.pem -O $HOME/$NAME/certs/fullchain.pem
+wget http://a.bbbvm.imdt.com.br/certs/privkey.pem -O $HOME/$NAME/certs/privkey.pem
 ```
 
-After that, add a line in your `/etc/hosts` file with the full domain name specified at previous step.
+## Create the container ( version 2.3 )
 
-In this example, the line added on hosts file is:
 ```
-172.20.0.2      bbb001.bbbvm.imdt.com.br
-```
+docker run -d --name=$NAME --hostname=$HOSTNAME --env="container=docker" --env="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" --env="DEBIAN_FRONTEND=noninteractive" --volume="/var/run/docker.sock:/var/run/docker.sock:rw" --cap-add="NET_ADMIN" --network=docker_backend --privileged --volume="$HOME/$NAME/certs/:/local/certs:rw" --volume="/sys/fs/cgroup:/sys/fs/cgroup:ro" --volume="$BBB_SRC_FOLDER:/home/bbb/src:rw" -t imdt/bigbluebutton:2.3.x
 
-## 7. Open the specified address in your browser:
-
-http://bbb001.bbbvm.imdt.com.br
-
-
-# Useful commands
-
-## Start container (after host reboot)
-```
-docker start bbb001
-docker attach bbb001
+docker exec -u bbb -it $NAME /bin/bash -l 
 ```
 
-## Stop the container
-```
-docker stop bbb001
-```
-
-## Kill the container (force exit)
-```
-docker kill bbb001
-```
-
-# MAC users
-Docker for Mac OS doesn't allow direct access to container IP's.
-
-In order to access the BBB container from your MAC os host, you can use openvpn:
-
-1. Build containers:
-```
-docker-compose build mac_proxy mac_openvpn
-```
-
-2. Start containers
-```
-docker-compose up mac_proxy mac_openvpn
-```
-
-After it finishes ( until it shows "Initialization Sequence Completed" ), hit CTRL+C.
-
-3. Add `comp-lzo no` at bottom of `mac-vpn/docker-for-mac.ovpn`
-
-4. Install openvpn configuration generated on `mac-vpn/docker-for-mac.ovpn` (double click and open on Tunnelblick)
-
-5. Start containers again
-```
-docker-compose up mac_proxy mac_openvpn
-```
