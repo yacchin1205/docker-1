@@ -11,7 +11,6 @@ HOSTNAME=$NAME.bbbvm.imdt.com.br
 mkdir $HOME/$NAME/
 cd $HOME/$NAME/
 git clone https://github.com/bigbluebutton/bigbluebutton.git
-
 cd
 
 BBB_SRC_FOLDER=$HOME/$NAME/bigbluebutton
