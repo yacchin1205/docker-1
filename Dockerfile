@@ -65,5 +65,6 @@ ADD mod/external.xml          /opt/freeswitch/conf/sip_profiles/external.xml
 
 # -- Finish startup
 ADD setup.sh /root/setup.sh
+RUN chmod +x /root/setup.sh
 ENTRYPOINT ["/root/setup.sh"]
 CMD []
